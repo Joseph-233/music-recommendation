@@ -1,5 +1,6 @@
 #dataset
 *.h5
+train_triplets.txt
 
 #Spotify credentials
 access_token.txt
