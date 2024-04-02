@@ -7,8 +7,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -17,12 +18,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt  # This installs from your requirements.txt file
+        pip install -r requirements.txt
 
     - name: Download NLTK data
       run: |
         python -c "import nltk; nltk.download('stopwords')"
 
-    - name: Test with pytest
+    - name: Set up environment variables from secrets
+      run: |
+        echo "SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}" >> $GITHUB_ENV
+        echo "SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> $GITHUB_ENV
+
+    - name: Run tests with pytest
       run: |
         pytest
