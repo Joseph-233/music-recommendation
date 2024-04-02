@@ -1,7 +1,7 @@
 
 import pytest
 import requests_mock
-from spotify_reco_by_mood_and_pace.main import get_access_token  # Adjust import path as needed
+from spotify_reco_by_mood_and_pace.main import get_access_token  
 
 @pytest.fixture
 def spotify_mock():
