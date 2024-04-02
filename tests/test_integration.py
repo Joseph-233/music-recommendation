@@ -1,6 +1,6 @@
 import pytest
 from spotify_reco_by_mood_and_pace.main import get_access_token  
-from your_recommendation_engine_module import get_song_recommendations
+from spotify_reco_by_mood_and_pace.main import get_song_recommendations
 
 
 def test_get_access_token():
