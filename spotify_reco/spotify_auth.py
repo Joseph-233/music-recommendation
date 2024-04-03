@@ -80,12 +80,19 @@ authorization_code = ''
 while not auth_code_received:
     pass
 
-# Get the access token using the authorization code
+# Get the access token
 access_token = get_access_token(authorization_code)
 
+access_token_file = './spotify_reco/models/access_token.txt'
+
+# Check if the directory exists, if not, create it
+if not os.path.exists(os.path.dirname(access_token_file)):
+    os.makedirs(os.path.dirname(access_token_file))
+
 # Write the access token to a file
-with open('../models/access_token.txt', 'w') as file:
-    file.write(access_token)
-
-print("Access token saved to access_token.txt")
-
+try:
+    with open(access_token_file, 'w') as f:
+        f.write(access_token)
+    print(f"Access token saved to {access_token_file}")
+except Exception as e:
+    print(f"Error writing to file: {e}")
