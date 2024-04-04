@@ -4,6 +4,7 @@ train_triplets.txt
 
 #Spotify credentials
 access_token.txt
+client_id.txt
 client_secret.txt
 
 # Byte-compiled / optimized / DLL files
