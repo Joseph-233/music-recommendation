@@ -151,7 +151,7 @@ if st.button("Fetch Spotify Data"):
         st.error("Failed to fetch Spotify data.")
 
 
-st.title("Heart Rate Input:")
+st.title("Heart Rate Input(20-180):")
 
 # User input for heart rate
 st.session_state.heart_rate = st.number_input(
