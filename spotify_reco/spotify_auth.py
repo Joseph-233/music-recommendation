@@ -7,9 +7,9 @@ import urllib
 import os
 
 # Spotify API credentials
-with open("./spotify_reco/models/client_id.txt", "r") as file:
+with open("streamlit/spotify_credential/client_id.txt", "r") as file:
     client_id = file.read().strip()  #'ebae4f3be3d1414f8eff4cc24aa0bb8d'
-with open("./spotify_reco/models/client_secret.txt", "r") as file:
+with open("streamlit/spotify_credential/client_secret.txt", "r") as file:
     client_secret = file.read().strip()  #'eb1c71cb347443c89676a5deb4911138'
 redirect_uri = "http://localhost:8888/callback/"
 

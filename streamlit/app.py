@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+
+
 import streamlit as st
 import streamlit.components.v1 as components
 import subprocess, os
@@ -7,15 +11,19 @@ import lightgbm as lgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from math import sqrt
+from urllib.parse import quote
 import requests
 import logging
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from spotify_reco.models import predict_features_by_tempo
+
 # Set up Spotify client
-with open("./spotify_reco/models/client_id.txt", "r") as file:
+with open("streamlit/spotify_credential/client_id.txt", "r") as file:
     client_id = file.read().strip()
-with open("./spotify_reco/models/client_secret.txt", "r") as file:
+with open("streamlit/spotify_credential/client_secret.txt", "r") as file:
     client_secret = file.read().strip()
 client_credentials_manager = SpotifyClientCredentials(client_id, client_secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
@@ -35,7 +43,7 @@ st.write(
 )
 
 # The path to spotify_auth.py from the streamlit folder
-script_path = "../spotify_reco/spotify_auth.py"
+script_path = "spotify_reco/spotify_auth.py"
 
 # Add a button to run the spotify_auth.py script
 if st.button("Authorize Spotify"):
@@ -118,6 +126,7 @@ def fetch_and_display_spotify_user_data(file_path):
     # Fetch top tracks and artists
     top_tracks_ids, top_tracks_items = get_spotify_top_data(access_token, "tracks")
     top_artists_ids, _ = get_spotify_top_data(access_token, "artists")
+    st.session_state["top_tracks_ids"] = top_tracks_ids
 
     # Fetch audio features
     audio_features = fetch_audio_features(top_tracks_ids, access_token)
@@ -150,110 +159,9 @@ if st.button("Fetch Spotify Data"):
 st.title("Heart Rate Input:")
 
 # User input for heart rate
-heart_rate = st.number_input("Enter your heart rate (bpm)", min_value=0)
-
-
-def load_data(file_path):
-    df = pd.read_csv(file_path)
-    # Perform any necessary preprocessing
-    return df
-
-
-# Use the cached load_data function to load your dataset
-logging.info("Starting to load data...")
-df = load_data("df_streamlit.csv")
-logging.info("Data loaded successfully.")
-
-
-def train_model(df):
-    logging.info("Starting model training...")
-
-    # Assuming df is preprocessed and ready for model training
-    predictor_columns = [
-        "danceability_diff",
-        "energy_diff",
-        "valence_diff",
-        "tempo_diff",
-        "acousticness_diff",
-        "instrumentalness_diff",
-        "speechiness_diff",
-        "liveness_diff",
-    ]
-
-    try:
-        X = df[predictor_columns]
-        y = np.log1p(df["play_count"])
-        logging.info(
-            f"Features and target variable prepared. X shape: {X.shape}, y length: {len(y)}"
-        )
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-        logging.info("Data split into training and test sets.")
-
-        train_data = lgb.Dataset(X_train, label=y_train)
-        test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
-        logging.info("LightGBM datasets created.")
-
-        params = {
-            "objective": "regression",
-            "metric": "rmse",
-            "num_leaves": 32,
-            "learning_rate": 0.1,
-            "feature_fraction": 0.8,
-            "bagging_fraction": 0.9,
-            "bagging_freq": 5,
-            "verbose": -1,
-            "max_depth": -1,
-            "min_data_in_leaf": 20,
-            "lambda_l1": 0.5,
-            "lambda_l2": 0.5,
-        }
-
-        logging.info("Starting LightGBM training...")
-        bst = lgb.train(params, train_data, num_boost_round=100, valid_sets=[test_data])
-        logging.info("Model training completed.")
-
-    except Exception as e:
-        logging.error(f"Error during model training: {e}", exc_info=True)
-        raise e  # Re-raise the exception to handle it in the calling code if necessary
-
-    return bst
-
-
-def predict_and_display_recommendations(bst, df, user_profile):
-    # Apply user_profile to df to calculate differential features
-    for feature in user_profile.keys():
-        df[f"{feature}_diff"] = abs(df[feature] - user_profile[feature])
-
-
-def get_top_recommendations(df, model, user_profile, top_n=10):
-    # Calculate the differential features based on user_profile
-    for feature in user_profile.keys():
-        df[f"{feature}_diff"] = abs(df[feature] - user_profile[feature])
-
-    # Prepare the features for prediction
-    features = [f"{feature}_diff" for feature in user_profile.keys()]
-    # Ensure we only predict for rows that have all required features available
-    df_features = df.dropna(subset=features)
-
-    # Predict the play count log for the filtered DataFrame
-    predicted_play_count_log = model.predict(df_features[features])
-
-    # Create a DataFrame for predictions
-    predictions_df = df_features[["song", "title", "artist_name"]].copy()
-    predictions_df["predicted_play_count_log"] = predicted_play_count_log
-
-    # Sort predictions to get top recommendations
-    predictions_df = predictions_df.sort_values(
-        by="predicted_play_count_log", ascending=False
-    )
-
-    # Remove duplicates to ensure unique songs
-    top_recommendations = predictions_df.drop_duplicates(subset=["song"]).head(top_n)
-
-    return top_recommendations
+st.session_state.heart_rate = st.number_input(
+    "Enter your heart rate (bpm)", min_value=40, max_value=200
+)
 
 
 def search_track_id(top_10_with_names, reco_num):
@@ -283,62 +191,21 @@ def search_track_id(top_10_with_names, reco_num):
 
 def show_top_10_recommendations():
     with st.spinner("Fetching top recommendations..."):
-        # Load recommended songs from CSV
-        recommended_songs = pd.read_csv("recommended_songs.csv")
-
-        # Calculate tempo thirds for the dataset
-        tempo_min, tempo_max = (
-            recommended_songs["tempo"].min(),
-            recommended_songs["tempo"].max(),
+        predict_features_by_tempo.load_model()
+        features = predict_features_by_tempo.predict_features(
+            st.session_state.heart_rate
         )
-        tempo_third = (tempo_max - tempo_min) / 3
-
-        # Determine the desired tempo range based on user-chosen heart rate
-        if heart_rate < 100:
-            tempo_low, tempo_high = tempo_min, tempo_min + tempo_third
-        elif heart_rate <= 140:
-            tempo_low, tempo_high = tempo_min + tempo_third, tempo_min + 2 * tempo_third
-        else:  # heart_rate > 140
-            tempo_low, tempo_high = tempo_min + 2 * tempo_third, tempo_max
-
-        # Filter songs within the desired tempo range
-        matching_songs = recommended_songs[
-            (recommended_songs["tempo"] >= tempo_low)
-            & (recommended_songs["tempo"] <= tempo_high)
-        ]
-
-        # Sort remaining songs by predicted play count log, assuming higher is better
-        sorted_songs = matching_songs.sort_values(
-            by="predicted_play_count_log", ascending=False
-        )
-
-        # Extract the top 10 recommendations
-        top_10_recommendations = sorted_songs.head(10)
-
-        # Load the dataset_ready2.csv to merge song titles and artist names
-        dataset_ready2 = pd.read_csv("dataset_ready2.csv")
-
-        # Merge top_10_recommendations with dataset_ready2 to get song title and artist names
-        top_10_with_names = top_10_recommendations.merge(
-            dataset_ready2[["song_encoded", "title", "artist_name"]],
-            on="song_encoded",
-            how="left",
-        )
-
-        # Drop duplicates to ensure each song title appears only once
-        top_10_with_names = top_10_with_names.drop_duplicates(
-            subset="title", keep="first"
-        )
+        top_tracks=quote(str(st.session_state["top_tracks_ids"][0]))
+        print('top_tracks',top_tracks)
+        top_10_with_names = sp.recommendations(seed_tracks=["31tZJyXMJaWBYStW7QmE5t"],limit=10, target_valence=round(features["target_valence"],1))
 
         # Display top 10 recommendations with titles and artist names
-        if not top_10_with_names.empty:
+        if True:#not top_10_with_names.empty:
             st.success(
                 "Here are your top 10 song recommendations based on your heart rate:"
             )
-            top_10_with_names.to_csv("top_10_with_names.csv", index=False)
-            st.dataframe(
-                top_10_with_names[["title", "artist_name", "predicted_play_count_log"]]
-            )
+            # top_10_with_names.to_csv("top_10_with_names.csv", index=False)
+            st.json(top_10_with_names)
 
         else:
             st.write("No recommendations available based on the chosen heart rate.")
@@ -356,87 +223,94 @@ if st.button("Get Recommendations"):
     show_top_10_recommendations()
 
 
-st.title("Listen and Choose:")
-dislike_btn = st.button(":x:", use_container_width=True)
-like_btn = st.button(":heart:", use_container_width=True)
-top_10_with_names = pd.read_csv("top_10_with_names.csv")
-if not os.path.exists("preferences.csv"):
-    # Create the file if it doesn't exist
-    pd.DataFrame(columns=["track_id", "title", "artist", "preference"]).to_csv(
-        "preferences.csv", index=False
-    )
-preferences = pd.read_csv("preferences.csv")
-track_id = search_track_id(top_10_with_names, st.session_state.reco_num)
+# st.title("Listen and Choose:")
+# dislike_btn = st.button(":x:", use_container_width=True)
+# like_btn = st.button(":heart:", use_container_width=True)
+# top_10_with_names = pd.read_csv("top_10_with_names.csv")
+# if not os.path.exists("preferences.csv"):
+#     # Create the file if it doesn't exist
+#     pd.DataFrame(columns=["track_id", "title", "artist", "preference"]).to_csv(
+#         "preferences.csv", index=False
+#     )
+# preferences = pd.read_csv("preferences.csv")
+# track_id = search_track_id(top_10_with_names, st.session_state.reco_num)
 
-if dislike_btn:
-    # Find the record
-    record = preferences.loc[preferences["track_id"] == track_id]
+# if dislike_btn:
+#     # Find the record
+#     record = preferences.loc[preferences["track_id"] == track_id]
 
-    if record.empty:
-        # If the record is not found, insert a new record
-        preferences = pd.concat(
-            [
-                preferences,
-                pd.DataFrame(
-                    {
-                        "track_id": [track_id],
-                        "title": [top_10_with_names.iloc[st.session_state.reco_num][
-                            "title"
-                        ]],
-                        "artist": [top_10_with_names.iloc[st.session_state.reco_num][
-                            "artist_name"
-                        ]],
-                        "preference": [-1],
-                    }
-                ),
-            ]
-        )
-    else:
-        # If the record is found, update it
-        preferences.loc[preferences["track_id"] == track_id, "preference"] = -1
-    st.session_state.reco_num += 1
+#     if record.empty:
+#         # If the record is not found, insert a new record
+#         preferences = pd.concat(
+#             [
+#                 preferences,
+#                 pd.DataFrame(
+#                     {
+#                         "track_id": [track_id],
+#                         "title": [
+#                             top_10_with_names.iloc[st.session_state.reco_num]["title"]
+#                         ],
+#                         "artist": [
+#                             top_10_with_names.iloc[st.session_state.reco_num][
+#                                 "artist_name"
+#                             ]
+#                         ],
+#                         "preference": [-1],
+#                     }
+#                 ),
+#             ]
+#         )
+#     else:
+#         # If the record is found, update it
+#         preferences.loc[preferences["track_id"] == track_id, "preference"] = -1
+#     st.session_state.reco_num += 1
 
 
-if like_btn:
-    # Find the record
-    record = preferences.loc[preferences["track_id"] == track_id]
+# if like_btn:
+#     # Find the record
+#     record = preferences.loc[preferences["track_id"] == track_id]
 
-    if record.empty:
-        # If the record is not found, insert a new record
-        preferences = pd.concat(
-            [
-                preferences,
-                pd.DataFrame(
-                    {
-                        "track_id": [track_id],
-                        "title": [top_10_with_names.iloc[st.session_state.reco_num][
-                            "title"
-                        ]],
-                        "artist": [top_10_with_names.iloc[st.session_state.reco_num][
-                            "artist_name"
-                        ]],
-                        "preference": [1],
-                    }
-                ),
-            ]
-        )
-    else:
-        # If the record is found, update it
-        preferences.loc[preferences["track_id"] == track_id, "preference"] = 1
-    st.session_state.reco_num += 1
+#     if record.empty:
+#         # If the record is not found, insert a new record
+#         preferences = pd.concat(
+#             [
+#                 preferences,
+#                 pd.DataFrame(
+#                     {
+#                         "track_id": [track_id],
+#                         "title": [
+#                             top_10_with_names.iloc[st.session_state.reco_num]["title"]
+#                         ],
+#                         "artist": [
+#                             top_10_with_names.iloc[st.session_state.reco_num][
+#                                 "artist_name"
+#                             ]
+#                         ],
+#                         "preference": [1],
+#                     }
+#                 ),
+#             ]
+#         )
+#     else:
+#         # If the record is found, update it
+#         preferences.loc[preferences["track_id"] == track_id, "preference"] = 1
+#     st.session_state.reco_num += 1
 
-preferences.to_csv("preferences.csv", index=False)
+# preferences.to_csv("preferences.csv", index=False)
 
-def render_listen_and_choose():
-    track_id = search_track_id(top_10_with_names, st.session_state.reco_num)
-    # Embed the Spotify iframe in the Streamlit app
-    # https://open.spotify.com/embed/track/7rU6Iebxzlvqy5t857bKFq?utm_source=generator&theme=0
-    # Create the URL for the Spotify iframe
-    components.iframe(
-        "https://open.spotify.com/embed/track/"
-        + track_id
-        + "?utm_source=generator&theme=0",
-        width=700,
-        height=352,
-    )
-render_listen_and_choose()
+
+# def render_listen_and_choose():
+#     track_id = search_track_id(top_10_with_names, st.session_state.reco_num)
+#     # Embed the Spotify iframe in the Streamlit app
+#     # https://open.spotify.com/embed/track/7rU6Iebxzlvqy5t857bKFq?utm_source=generator&theme=0
+#     # Create the URL for the Spotify iframe
+#     components.iframe(
+#         "https://open.spotify.com/embed/track/"
+#         + track_id
+#         + "?utm_source=generator&theme=0",
+#         width=700,
+#         height=352,
+#     )
+
+
+# render_listen_and_choose()
