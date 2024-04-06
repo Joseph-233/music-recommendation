@@ -2,7 +2,7 @@ track_id,name,artist,preference
 1M9IJNLfirBmrNAzzhJN3j,Can't Smile Without You - Unreleased alternate first take,Barry Manilow,1
 1royJ1FfrCTV45v9boP8Lm,情人知己,Sally Yeh,1
 1z7Md1JSNAttEKiLQjsQMe,ほのかなイリュージョン,Kingo Hamada,1
-5aHDLo1MY6y15fWz1BfK2M,白天不懂夜的黑,那英,1
+5aHDLo1MY6y15fWz1BfK2M,白天不懂夜的黑,那英,-1
 3i4s69roixfevSv39Qpekf,Starting Again,Barry Manilow,-1
 0LyR8MZT3A2tp58dgHeNhB,君は天然色,大滝詠一,1
 7EkWXAI1wn8Ii883ecd9xr,Freaks,Surf Curse,1
@@ -85,9 +85,12 @@ track_id,name,artist,preference
 3D7c877toc0Aec6HLAlILK,La Chinita,Manu Chao,-1
 1jDJFeK9x3OZboIAHsY9k2,I'm Still Standing,Elton John,1
 2zURJQo87Q37XeZi0Io1ld,COOL DOWN - 2022 Remaster,Mariya Takeuchi,-1
+<<<<<<< HEAD
 4LFwNJWoj74Yd71fIr1W8x,Right Here Waiting,Richard Marx,-1
 5gIzMrCIhzanDCzcmPn7vj,花與蝶,黃品源,1
 7dLtBkQiXJyQnMJNCC8Aq2,秋意上心頭,Sarah Chen,1
 4Uq4BHa2NVk9EUpXdSAdQl,一路上有你,Jacky Cheung,-1
 1HuoJQr4Qs2Nt93K3wZ2Wy,朋友別哭,David Lui,1
 42O94rF8TR5FXKX8Ymqz1j,Le Rendez Vous,Manu Chao,1
+=======
+>>>>>>> c86249ffdb255682d6e2655d4fbd61fbaffde6df
