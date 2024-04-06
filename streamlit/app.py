@@ -151,11 +151,11 @@ if st.button("Fetch Spotify Data"):
         st.error("Failed to fetch Spotify data.")
 
 
-st.title("Heart Rate Input:")
+st.title("Heart Rate Input(20-180):")
 
 # User input for heart rate
 st.session_state.heart_rate = st.number_input(
-    "Enter your heart rate (bpm)", min_value=40, max_value=200
+    "Enter your heart rate (bpm)(20-180)", min_value=20, max_value=180
 )
 
 
@@ -192,7 +192,7 @@ def show_top_10_recommendations():
         )
         top_tracks = st.session_state["top_tracks_ids"][0:5]
         print("top_tracks", top_tracks)
-        print(f'Search min tempo: {st.session_state.heart_rate}')
+        print(f"Search min tempo: {st.session_state.heart_rate}")
         top_10_with_names = sp.recommendations(
             seed_tracks=top_tracks,
             limit=50,
