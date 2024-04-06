@@ -80,10 +80,11 @@ def predict_features(tempo):
         track_data.loc[:, "tempo"].max() - track_data.loc[:, "tempo"].min()
     ) + track_data.loc[:, "tempo"].min()
     features = model.predict([[tempo_normalized]])
-    print("predict_features", features)
     columns = get_predicted_features_name()
     columns = ["target_" + col for col in columns]
-    return pd.DataFrame(features, columns=columns)
+    features = dict(zip(columns, features))
+    print("predict_features", features)
+    return features
 
 
 def save_model():
