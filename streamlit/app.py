@@ -192,8 +192,13 @@ def show_top_10_recommendations():
         )
         top_tracks = st.session_state["top_tracks_ids"][0:5]
         print("top_tracks", top_tracks)
+        print(f'Search min tempo: {st.session_state.heart_rate}')
         top_10_with_names = sp.recommendations(
-            seed_tracks=top_tracks, limit=10, **features
+            seed_tracks=top_tracks,
+            limit=50,
+            target_tempo=st.session_state.heart_rate,
+            min_tempo=st.session_state.heart_rate,
+            **features,
         )
         if top_10_with_names:
             items = top_10_with_names["tracks"]
@@ -224,7 +229,7 @@ def show_top_10_recommendations():
             st.write("No recommendations available based on the chosen heart rate.")
 
 
-st.title("Top 10 Songs for Running:")
+st.title("Top 50 Songs for Running:")
 
 if "reco_num" not in st.session_state:
     # record the now playing track
