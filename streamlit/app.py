@@ -1,4 +1,4 @@
-#IMPORTANT: Run this in console "streamlit run streamlit\app.py"
+# IMPORTANT: Run this in console "streamlit run streamlit\app.py"
 
 from pathlib import Path
 import sys
@@ -38,7 +38,7 @@ st.write(
 )
 
 # The path to spotify_auth.py from the streamlit folder
-script_path = "spotify_reco/spotify_auth.py"
+script_path = "streamlit/spotify_auth.py"
 
 # Add a button to run the spotify_auth.py script
 if st.button("Authorize Spotify"):
@@ -135,7 +135,7 @@ def fetch_and_display_spotify_user_data(file_path):
 # Example usage in your Streamlit app
 if st.button("Fetch Spotify Data"):
     user_profile = fetch_and_display_spotify_user_data(
-        "./spotify_reco/models/access_token.txt"
+        "streamlit/spotify_credential/access_token.txt"
     )
     if user_profile:
         # Store user_profile in session state for later use

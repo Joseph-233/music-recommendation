@@ -69,7 +69,7 @@ def train_lgb():
     #     print(f"RMSE: {rmse}")
     #     print(f"MAE: {mae}")
     # print("predict 20000 bpm", multi_output_regressor.predict([[20000]]))
-    print("predict 10 bpm", multi_output_regressor.predict(X_test))
+    #print("predict 10 bpm", multi_output_regressor.predict(X_test))
     # print(multi_output_regressor.get_params())
 
 
