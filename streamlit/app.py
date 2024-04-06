@@ -1,18 +1,12 @@
+#IMPORTANT: Run this in cole "streamlit run streamlit\app.py"
+
 from pathlib import Path
 import sys
-from turtle import title
-
 
 import streamlit as st
 import streamlit.components.v1 as components
 import subprocess, os
 import pandas as pd
-import numpy as np
-import lightgbm as lgb
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from math import sqrt
-from urllib.parse import quote
 import requests
 import logging
 import spotipy
@@ -172,9 +166,9 @@ def search_track_id(top_10_with_names, reco_num):
     )
     query = (
         "artist:"
-        + top_10_with_names.iloc[reco_num]["artist_name"]
+        + top_10_with_names.iloc[reco_num]["artist"]
         + " track:"
-        + top_10_with_names.iloc[reco_num]["title"]
+        + top_10_with_names.iloc[reco_num]["name"]
     )
     results = sp.search(
         q=query,
@@ -203,7 +197,9 @@ def show_top_10_recommendations():
         )
         if top_10_with_names:
             items = top_10_with_names["tracks"]
-            st.session_state.top_10_with_names_df = pd.DataFrame(columns=["id", "name", "artist"])
+            st.session_state.top_10_with_names_df = pd.DataFrame(
+                columns=["id", "name", "artist"]
+            )
             for item in items:
                 track = [item["id"], item["name"], item["artists"][0]["name"]]
                 st.session_state.top_10_with_names_df = pd.concat(
@@ -219,7 +215,9 @@ def show_top_10_recommendations():
             st.success(
                 "Here are your top 10 song recommendations based on your heart rate:"
             )
-            st.session_state.top_10_with_names_df.to_csv("top_10_with_names.csv", index=False)
+            st.session_state.top_10_with_names_df.to_csv(
+                "streamlit/temp_data/top_10_with_names.csv", index=False
+            )
             st.dataframe(st.session_state.top_10_with_names_df)
 
         else:
@@ -239,18 +237,20 @@ if st.button("Get Recommendations"):
 
 
 st.title("Listen and Choose:")
-dislike_btn = st.button(":x:", use_container_width=True)
-like_btn = st.button(":heart:", use_container_width=True)
-top_10_with_names = pd.read_csv("top_10_with_names.csv")
-if not os.path.exists("preferences.csv"):
+# dislike_btn = st.button(":x:", use_container_width=True)
+# like_btn = st.button(":heart:", use_container_width=True)
+top_10_with_names = pd.read_csv("streamlit/temp_data/top_10_with_names.csv")
+if not os.path.exists("streamlit/temp_data/preferences.csv"):
     # Create the file if it doesn't exist
-    pd.DataFrame(columns=["track_id", "title", "artist", "preference"]).to_csv(
-        "preferences.csv", index=False
+    pd.DataFrame(columns=["track_id", "name", "artist", "preference"]).to_csv(
+        "streamlit/temp_data/preferences.csv", index=False
     )
-preferences = pd.read_csv("preferences.csv")
-track_id = search_track_id(top_10_with_names, st.session_state.reco_num)
+preferences = pd.read_csv("streamlit/temp_data/preferences.csv")
+track_id = pd.read_csv("streamlit/temp_data/top_10_with_names.csv").iloc[
+    st.session_state.reco_num
+]["id"]
 
-if dislike_btn:
+if st.button(":x:", use_container_width=True):
     # Find the record
     record = preferences.loc[preferences["track_id"] == track_id]
 
@@ -262,13 +262,11 @@ if dislike_btn:
                 pd.DataFrame(
                     {
                         "track_id": [track_id],
-                        "title": [
-                            top_10_with_names.iloc[st.session_state.reco_num]["title"]
+                        "name": [
+                            top_10_with_names.iloc[st.session_state.reco_num]["name"]
                         ],
                         "artist": [
-                            top_10_with_names.iloc[st.session_state.reco_num][
-                                "artist_name"
-                            ]
+                            top_10_with_names.iloc[st.session_state.reco_num]["artist"]
                         ],
                         "preference": [-1],
                     }
@@ -281,7 +279,7 @@ if dislike_btn:
     st.session_state.reco_num += 1
 
 
-if like_btn:
+if st.button(":heart:", use_container_width=True):
     # Find the record
     record = preferences.loc[preferences["track_id"] == track_id]
 
@@ -293,13 +291,11 @@ if like_btn:
                 pd.DataFrame(
                     {
                         "track_id": [track_id],
-                        "title": [
-                            top_10_with_names.iloc[st.session_state.reco_num]["title"]
+                        "name": [
+                            top_10_with_names.iloc[st.session_state.reco_num]["name"]
                         ],
                         "artist": [
-                            top_10_with_names.iloc[st.session_state.reco_num][
-                                "artist_name"
-                            ]
+                            top_10_with_names.iloc[st.session_state.reco_num]["artist"]
                         ],
                         "preference": [1],
                     }
@@ -311,11 +307,13 @@ if like_btn:
         preferences.loc[preferences["track_id"] == track_id, "preference"] = 1
     st.session_state.reco_num += 1
 
-preferences.to_csv("preferences.csv", index=False)
+preferences.to_csv("streamlit/temp_data/preferences.csv", index=False)
 
 
 def render_listen_and_choose():
-    track_id = search_track_id(top_10_with_names, st.session_state.reco_num)
+    track_id = pd.read_csv("streamlit/temp_data/top_10_with_names.csv").iloc[
+        st.session_state.reco_num
+    ]["id"]
     # Embed the Spotify iframe in the Streamlit app
     # https://open.spotify.com/embed/track/7rU6Iebxzlvqy5t857bKFq?utm_source=generator&theme=0
     # Create the URL for the Spotify iframe
