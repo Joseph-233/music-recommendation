@@ -76,7 +76,7 @@ def train_lgb():
 def predict_features(tempo):
     global model
     track_data = pd.read_csv(aggregated_play_count_route)
-    tempo_normalized = ((tempo - 40) / (200 - 40)) * (
+    tempo_normalized = ((tempo - 60) / (200 - 60)) * (
         track_data.loc[:, "tempo"].max() - track_data.loc[:, "tempo"].min()
     ) + track_data.loc[:, "tempo"].min()
     features = model.predict([[tempo_normalized]])

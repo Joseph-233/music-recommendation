@@ -155,7 +155,7 @@ st.title("Heart Rate Input:")
 
 # User input for heart rate
 st.session_state.heart_rate = st.number_input(
-    "Enter your heart rate (bpm)", min_value=40, max_value=200
+    "Enter your heart rate (bpm)(60-200)", min_value=60, max_value=200
 )
 
 
@@ -192,7 +192,7 @@ def show_top_10_recommendations():
         )
         top_tracks = st.session_state["top_tracks_ids"][0:5]
         print("top_tracks", top_tracks)
-        print(f'Search min tempo: {st.session_state.heart_rate}')
+        print(f"Search min tempo: {st.session_state.heart_rate}")
         top_10_with_names = sp.recommendations(
             seed_tracks=top_tracks,
             limit=50,
