@@ -1,5 +1,5 @@
 import pytest
-from spotify_reco.models.predict_features_by_tempo import predict_features
+from spotify_reco.models.predict_features_by_tempo import predict_features, model
 
 # Mocking the global model object
 class MockModel:
