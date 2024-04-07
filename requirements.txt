@@ -11,3 +11,4 @@ seaborn
 missingno
 keyboard 
 google-cloud-bigquery
+lightgbm
