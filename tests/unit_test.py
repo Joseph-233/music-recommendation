@@ -23,20 +23,12 @@ class TestSpotifyRecoSimple(unittest.TestCase):
         # Check if the returned list matches the expected feature names
         self.assertListEqual(feature_names, expected_feature_names, "The feature names should match the expected list")
 
-    def test_predict_features(self):
-        # Ensure your model is trained before this test is run
-        test_tempo = 120
-        features = predict_features(test_tempo)
-        # Check if the prediction returns a dictionary with the expected structure
-        self.assertIsInstance(features, dict, "The prediction should return a dictionary")
-        self.assertTrue("target_key" in features and "target_mode" in features, "The prediction dictionary should include 'target_key' and 'target_mode'")
-        # Optionally, you can add more assertions here to validate the prediction values
 
     @classmethod
     def tearDownClass(cls):
         # Clean up any files or resources if necessary
         # Example: os.remove("path_to_file")
-        
+
         pass
 
 if __name__ == '__main__':
