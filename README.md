@@ -30,11 +30,19 @@ To set up the project locally, follow these steps:
 Ensure you have Python 3.8+ installed, then run:
     ```bash
     pip install -r requirements.txt
-3. **Environment Setup:**
-Create a `.env` file in the project root directory and add your Spotify API credentials:
-    ```bash
-    SPOTIFY_CLIENT_ID='your_spotify_client_id'
-    SPOTIFY_CLIENT_SECRET='your_spotify_client_secret'
+3. **Setting Up Spotify API Credentials:**
+You need to register the application with Spotify to obtain credentials necessary for using its Web API.
+- **Create Spotify Application:**
+Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) and create an application. During the setup, set the Redirect URI to `http://localhost:8888/callback/` and tick 'Web API' under "Which API/SDKs are you planning to use?"
+- **Obtain Credentials:**
+Navigate to the app settings in your Spotify Developer Dashboard, and copy your Client ID and Client Secret.
+- **Configure Credentials Locally:**
+Create two files in the `streamlit/spotify_credential` directory of your project to store these credentials securely:
+  ```bash
+  mkdir -p streamlit/spotify_credential
+  echo YOUR_CLIENT_ID > streamlit/spotify_credential/client_id.txt
+  echo YOUR_CLIENT_SECRET > streamlit/spotify_credential/client_secret.txt
+Replace **'YOUR_CLIENT_ID'** and **'YOUR_CLIENT_SECRET'** with the actual values.
 4. **Run the Streamlit app:**
 Navigate to the `streamlit` directory and start the app:
     ```bash
