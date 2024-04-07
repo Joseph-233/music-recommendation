@@ -1,4 +1,3 @@
-# Modifying the script to write the access token to a file
 import requests
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
@@ -6,11 +5,9 @@ import webbrowser
 import urllib
 import os
 
-# Spotify API credentials
-with open("streamlit/spotify_credential/client_id.txt", "r") as file:
-    client_id = file.read().strip()  #'ebae4f3be3d1414f8eff4cc24aa0bb8d'
-with open("streamlit/spotify_credential/client_secret.txt", "r") as file:
-    client_secret = file.read().strip()  #'eb1c71cb347443c89676a5deb4911138'
+# Spotify API credentials are sourced from environment variables
+client_id = os.environ['SPOTIFY_CLIENT_ID']
+client_secret = os.environ['SPOTIFY_CLIENT_SECRET']
 redirect_uri = "http://localhost:8888/callback/"
 
 # Scope for user data access
@@ -27,16 +24,13 @@ auth_params = {
 auth_query = urllib.parse.urlencode(auth_params)
 auth_full_url = f"{auth_url}?{auth_query}"
 
-
 # HTTP Server to handle OAuth callback
 class OAuthCallbackHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(
-            b"Authentication successful. You can close this tab and return to the notebook."
-        )
+        self.wfile.write(b"Authentication successful. You can close this tab and return to the application.")
 
         # Extract the authorization code
         url_path = self.path
@@ -50,13 +44,11 @@ class OAuthCallbackHandler(BaseHTTPRequestHandler):
         global authorization_code
         authorization_code = auth_code
 
-
 # Start the server
 def start_server():
     server_address = ("", 8888)
     httpd = HTTPServer(server_address, OAuthCallbackHandler)
     httpd.serve_forever()
-
 
 # Get access token
 def get_access_token(auth_code):
@@ -73,24 +65,36 @@ def get_access_token(auth_code):
     access_token = token_json["access_token"]
     return access_token
 
+# Function to run the server and get the authorization code, not needed in the script directly
+# but kept here for completeness. It can be used in an if __name__ == "__main__": block
+def run_server_and_get_code():
+    # Running the server in a separate thread
+    server_thread = threading.Thread(target=start_server)
+    server_thread.daemon = True
+    server_thread.start()
 
-# Running the server in a separate thread
-server_thread = threading.Thread(target=start_server)
-server_thread.daemon = True
-server_thread.start()
+    # Open the authorization URL in a browser
+    webbrowser.open(auth_full_url)
 
-# Open the authorization URL in a browser
-webbrowser.open(auth_full_url)
+    # Wait for the authorization code
+    global auth_code_received
+    auth_code_received = False
+    global authorization_code
+    authorization_code = ""
+    while not auth_code_received:
+        pass
 
-# Wait for the authorization code
-auth_code_received = False
-authorization_code = ""
-while not auth_code_received:
-    pass
+    # Shutdown HTTP server after getting the code
+    return authorization_code
+
+# Placeholder for where you would get your authorization code in a real-world scenario
+# In testing, you can mock this out or provide a code directly to get_access_token
+authorization_code = run_server_and_get_code()
 
 # Get the access token
 access_token = get_access_token(authorization_code)
 
+# Path to save the access token
 access_token_file = "streamlit/spotify_credential/access_token.txt"
 
 # Check if the directory exists, if not, create it
