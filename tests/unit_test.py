@@ -8,7 +8,7 @@ class MockModel:
 
 @pytest.fixture
 def mock_model(monkeypatch):
-    monkeypatch.setattr('your_module_name.model', MockModel())
+    monkeypatch.setattr('spotify_reco.models.predict_features_by_tempo.model', MockModel())
 
 def test_predict_features(mock_model):
     tempo = 120
