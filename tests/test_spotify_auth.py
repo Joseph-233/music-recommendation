@@ -13,6 +13,11 @@ def spotify_mock():
         yield m
 
 def test_get_access_token_with_mock(spotify_mock):
-    mock_auth_code = "mock_auth_code"  # This simulates the code you'd get from Spotify after user authorization
+    # This simulates the code you'd get from Spotify after user authorization
+    mock_auth_code = "mock_auth_code"
+    
+    # Call the get_access_token function with the mock_auth_code
     access_token = get_access_token(mock_auth_code)
+    
+    # Assert to make sure that the access token received from get_access_token is the mocked one
     assert access_token == "mocked_access_token", "Should return the mocked access token"
