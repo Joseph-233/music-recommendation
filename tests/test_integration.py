@@ -1,5 +1,5 @@
 import pytest
-from spotify_reco_by_mood_and_pace import get_access_token  
+from streamlit.spotify_auth import get_access_token  
 import time
 
 def test_get_access_token():
