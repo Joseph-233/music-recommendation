@@ -91,7 +91,7 @@ while not auth_code_received:
 # Get the access token
 access_token = get_access_token(authorization_code)
 
-access_token_file = "./spotify_reco/models/access_token.txt"
+access_token_file = "streamlit/spotify_credential/access_token.txt"
 
 # Check if the directory exists, if not, create it
 if not os.path.exists(os.path.dirname(access_token_file)):

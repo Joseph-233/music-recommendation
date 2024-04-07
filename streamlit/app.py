@@ -1,4 +1,4 @@
-#IMPORTANT: Run this in console "streamlit run streamlit\app.py"
+# IMPORTANT: Run this in console "streamlit run streamlit\app.py"
 
 from pathlib import Path
 import sys
@@ -38,7 +38,7 @@ st.write(
 )
 
 # The path to spotify_auth.py from the streamlit folder
-script_path = "spotify_reco/spotify_auth.py"
+script_path = "streamlit/spotify_auth.py"
 
 # Add a button to run the spotify_auth.py script
 if st.button("Authorize Spotify"):
@@ -135,7 +135,7 @@ def fetch_and_display_spotify_user_data(file_path):
 # Example usage in your Streamlit app
 if st.button("Fetch Spotify Data"):
     user_profile = fetch_and_display_spotify_user_data(
-        "./spotify_reco/models/access_token.txt"
+        "streamlit/spotify_credential/access_token.txt"
     )
     if user_profile:
         # Store user_profile in session state for later use
@@ -155,7 +155,7 @@ st.title("Heart Rate Input:")
 
 # User input for heart rate
 st.session_state.heart_rate = st.number_input(
-    "Enter your heart rate (bpm)", min_value=40, max_value=200
+    "Enter your heart rate (bpm)(60-200)", min_value=60, max_value=200
 )
 
 
@@ -192,8 +192,13 @@ def show_top_10_recommendations():
         )
         top_tracks = st.session_state["top_tracks_ids"][0:5]
         print("top_tracks", top_tracks)
+        print(f"Search min tempo: {st.session_state.heart_rate}")
         top_10_with_names = sp.recommendations(
-            seed_tracks=top_tracks, limit=10, **features
+            seed_tracks=top_tracks,
+            limit=50,
+            target_tempo=st.session_state.heart_rate,
+            min_tempo=st.session_state.heart_rate,
+            **features,
         )
         if top_10_with_names:
             items = top_10_with_names["tracks"]
@@ -224,7 +229,7 @@ def show_top_10_recommendations():
             st.write("No recommendations available based on the chosen heart rate.")
 
 
-st.title("Top 10 Songs for Running:")
+st.title("Top 50 Songs for Running:")
 
 if "reco_num" not in st.session_state:
     # record the now playing track

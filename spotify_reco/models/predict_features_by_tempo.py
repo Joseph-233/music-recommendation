@@ -69,21 +69,23 @@ def train_lgb():
     #     print(f"RMSE: {rmse}")
     #     print(f"MAE: {mae}")
     # print("predict 20000 bpm", multi_output_regressor.predict([[20000]]))
-    print("predict 10 bpm", multi_output_regressor.predict(X_test))
+    # print("predict 10 bpm", multi_output_regressor.predict(X_test))
     # print(multi_output_regressor.get_params())
 
 
 def predict_features(tempo):
     global model
     track_data = pd.read_csv(aggregated_play_count_route)
-    tempo_normalized = ((tempo - 40) / (200 - 40)) * (
+    tempo_normalized = ((tempo - 60) / (200 - 60)) * (
         track_data.loc[:, "tempo"].max() - track_data.loc[:, "tempo"].min()
     ) + track_data.loc[:, "tempo"].min()
     features = model.predict([[tempo_normalized]])
     columns = get_predicted_features_name()
     columns = ["target_" + col for col in columns]
-    features = dict(zip(columns, features))
-    print("predict_features", features)
+    features = dict(zip(columns, features[0]))
+    features["target_key"] = round(features["target_key"])
+    features["target_mode"] = round(features["target_mode"])
+    print(f"predict by tempo_normalized: {tempo_normalized}", features)
     return features
 
 
