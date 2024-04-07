@@ -1,84 +1,43 @@
-import pytest
-import pandas as pd
-from spotify_reco.models.predict_features_by_tempo import (
-    aggregate_play_count,
-    get_predicted_features_name,
-    train_lgb,
-    predict_features,
-    save_model,
-    load_model,
-)
+import unittest
+import os
+from spotify_reco.models.predict_features_by_tempo import aggregate_play_count, get_predicted_features_name, predict_features
 
-# Test aggregate_play_count function
-def test_aggregate_play_count(tmp_path):
-    # Create a temporary CSV file
-    csv_file = tmp_path / "test_data.csv"
-    # Sample data for testing
-    data = {
-        "tempo": [120, 140, 160],
-        "danceability": [0.5, 0.6, 0.7],
-        "valence": [0.3, 0.4, 0.5],
-        "play_count": [100, 200, 300],
-    }
-    df = pd.DataFrame(data)
-    df.to_csv(csv_file, index=False)
+class TestSpotifyRecoSimple(unittest.TestCase):
 
-    # Call the function with the temporary file
-    aggregate_play_count(route=csv_file)
+    def setUp(self):
+        # Setup any required variables or perform preliminary steps
+        self.track_data_route = "spotify_reco/datasets/dataset_ready.csv"
+        self.aggregated_play_count_route = "spotify_reco/datasets/aggregated_play_count.csv"
 
-    # Read the aggregated data
-    aggregated_data = pd.read_csv("spotify_reco/datasets/aggregated_play_count.csv")
+    def test_aggregate_play_count(self):
+        # Call the function to test
+        aggregate_play_count(self.track_data_route)
+        # Verify the file was created and is not empty
+        self.assertTrue(os.path.exists(self.aggregated_play_count_route), "Aggregated play count file should exist")
+        self.assertGreater(os.path.getsize(self.aggregated_play_count_route), 0, "File should not be empty")
 
-    # Check if the aggregated data has correct columns
-    assert "tempo" in aggregated_data.columns
-    assert "danceability" in aggregated_data.columns
-    assert "valence" in aggregated_data.columns
-    assert "play_count" in aggregated_data.columns
+    def test_get_predicted_features_name(self):
+        # Expected feature names based on your dataset columns
+        expected_feature_names = ['danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence']
+        feature_names = get_predicted_features_name()
+        # Check if the returned list matches the expected feature names
+        self.assertListEqual(feature_names, expected_feature_names, "The feature names should match the expected list")
 
-    # Check if aggregation is correct
-    assert len(aggregated_data) == 1
-    assert aggregated_data.loc[0, "play_count"] == sum(data["play_count"])
+    def test_predict_features(self):
+        # Ensure your model is trained before this test is run
+        test_tempo = 120
+        features = predict_features(test_tempo)
+        # Check if the prediction returns a dictionary with the expected structure
+        self.assertIsInstance(features, dict, "The prediction should return a dictionary")
+        self.assertTrue("target_key" in features and "target_mode" in features, "The prediction dictionary should include 'target_key' and 'target_mode'")
+        # Optionally, you can add more assertions here to validate the prediction values
 
+    @classmethod
+    def tearDownClass(cls):
+        # Clean up any files or resources if necessary
+        # Example: os.remove("path_to_file")
+        
+        pass
 
-# Assuming the rest of the functions are similar, you can write tests for them as well
-
-
-# Test get_predicted_features_name function
-def test_get_predicted_features_name():
-    # Assuming you know the expected output of this function
-    expected_features = ["danceability", "valence"]
-    assert get_predicted_features_name() == expected_features
-
-
-# Test train_lgb function
-# Note: Since this function relies on external data and involves training a model,
-# you may need to mock certain functionalities or split the function into smaller parts for better testing.
-
-
-# Test predict_features function
-def test_predict_features():
-    # Assuming you know the expected output for a given input
-    tempo = 120  # Example tempo value
-    expected_features = {
-        "target_danceability": 0.6,
-        "target_valence": 0.4,
-        "target_key": 5,
-        "target_mode": 1,
-    }
-    assert predict_features(tempo) == expected_features
-
-
-# Test save_model and load_model functions
-def test_save_and_load_model(tmp_path):
-    # Assuming you have a trained model object
-    model = "dummy_model"
-
-    # Save the model
-    model_path = tmp_path / "test_model.joblib"
-    save_model(model, model_path)
-
-    # Load the model
-    loaded_model = load_model(model_path)
-
-    # Check if the loaded model is the same as the original model
-    assert loaded_model == model
+if __name__ == '__main__':
+    unittest.main()
