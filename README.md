@@ -1,8 +1,4 @@
 
-Certainly! Here's the README content formatted in Markdown for your GitHub repository:
-
-markdown
-Copy code
 # Run Pace Music Recommender System (RPMRS)
 
 ## Overview
